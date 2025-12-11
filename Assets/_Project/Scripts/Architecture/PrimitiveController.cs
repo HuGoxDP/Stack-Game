@@ -8,7 +8,8 @@ namespace _Project.Scripts.Architecture
         [SerializeField] private AnimatePrimitive _animator;
         [SerializeField] private PrimitiveSpawner _primitiveSpawner;
         [SerializeField] private FallingPartSpawner _fallingPartSpawner;
-
+        [SerializeField] private CameraMover _cameraMover;
+        
         [Header("Primitive Size")]
         [field: SerializeField]
         public float Width { get; private set; }
@@ -74,34 +75,30 @@ namespace _Project.Scripts.Architecture
                 return;
 
             _animator.Stop();
-
+            
+            // old primitive
             var oldPrimitive = new Primitive(
                 _lastSpawnedPrimitive?.position ?? Vector3.zero,
                 _lastSpawnedPrimitive?.transform.localScale ?? new Vector3(Width, Height, Width),
                 Color.white
             );
-
-
+            
+            //current primitive
             var currentPrimitive = new Primitive(
                 _currentPrimitiveRigidbody.transform.position,
                 _currentPrimitiveRigidbody.transform.localScale,
                 _currentColor);
             
-            if (!Intersects(oldPrimitive, currentPrimitive)) {
+            var overlap = GetOverlap(oldPrimitive, currentPrimitive);
+            
+            if (overlap == null) {
                 _currentPrimitiveRigidbody.useGravity = true;
                 _currentPrimitiveRigidbody.isKinematic = false;
                 _primitiveSpawner.ReturnToPoolWithDelay(_currentPrimitiveRigidbody, 0.5f);
                 _currentPrimitiveRigidbody = null;
                 return;
             }
-
             _primitiveSpawner?.ReturnToPoolWithDelay(_currentPrimitiveRigidbody, 0);
-
-            // Find overlap
-            var overlap = GetOverlap(oldPrimitive, currentPrimitive);
-            if (overlap == null) {
-                return;
-            }
 
             var overlapPrimitive = _primitiveSpawner?.SpawnPrimitive((Primitive)overlap);
             _primitives.Add((Primitive)overlap);
@@ -109,6 +106,8 @@ namespace _Project.Scripts.Architecture
             //Find falling parts
             _fallingPartSpawner.SpawnFallingPart(currentPrimitive, (Primitive)overlap, Height);
             _lastSpawnedPrimitive = overlapPrimitive;
+            
+            _cameraMover?.MoveUp(Height);
         }
 
         private Primitive? GetOverlap(in Primitive oldPrimitive, in Primitive currentPrimitive) {

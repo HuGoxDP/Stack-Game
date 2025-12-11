@@ -636,6 +636,7 @@ GameObject:
   - component: {fileID: 897199084}
   - component: {fileID: 897199080}
   - component: {fileID: 897199083}
+  - component: {fileID: 897199085}
   m_Layer: 0
   m_Name: GameController
   m_TagString: Untagged
@@ -658,6 +659,7 @@ MonoBehaviour:
   _animator: {fileID: 897199083}
   _primitiveSpawner: {fileID: 897199081}
   _fallingPartSpawner: {fileID: 897199084}
+  _cameraMover: {fileID: 897199085}
   <Width>k__BackingField: 3
   <Height>k__BackingField: 0.4
   _fromDirectionRadius: 0
@@ -723,6 +725,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _primitiveSpawner: {fileID: 897199081}
   _destroyDelay: 0.5
+--- !u!114 &897199085
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 897199079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec7324f3e0074b64802f74b29b45457a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _camera: {fileID: 330585545}
 --- !u!1 &1581553069
 GameObject:
   m_ObjectHideFlags: 0

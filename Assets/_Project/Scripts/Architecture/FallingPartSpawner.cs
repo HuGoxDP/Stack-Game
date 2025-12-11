@@ -7,7 +7,7 @@ namespace _Project.Scripts.Architecture
         [SerializeField] private PrimitiveSpawner _primitiveSpawner;
         [SerializeField] private float _destroyDelay = 0.5f;
 
-        public void SpawnFallingPart(Primitive source, Primitive overlap, float height) {
+        public void SpawnFallingPart(in Primitive source, in Primitive overlap, float height) {
             var y = source.Position.y;
             var color = source.Color;
             
@@ -48,7 +48,7 @@ namespace _Project.Scripts.Architecture
         }
 
         private void TrySpawnPart(Vector3 scale, Vector3 position, Color color) {
-            var part = _primitiveSpawner.SpawnPrimitive(scale, position, color);
+            var part = _primitiveSpawner.SpawnPrimitive(new Primitive(position, scale, color));
             part.useGravity = true;
             part.isKinematic = false;
 
