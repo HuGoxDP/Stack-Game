@@ -8,26 +8,30 @@ namespace _Project.Scripts.Architecture
         [SerializeField] private AnimatePrimitive _animator;
         [SerializeField] private PrimitiveSpawner _primitiveSpawner;
         [SerializeField] private FallingPartSpawner _fallingPartSpawner;
-        
+
         [Header("Primitive Size")]
-        [field: SerializeField] public float Width { get; private set; }
+        [field: SerializeField]
+        public float Width { get; private set; }
+
         [field: SerializeField] public float Height { get; private set; }
 
-        [Header("Animation Settings")] 
-        [SerializeField] private float _fromDirectionRadius;
+        [Header("Animation Settings")] [SerializeField]
+        private float _fromDirectionRadius;
+
         [SerializeField] private float _toDirectionRadius = 90f;
-        
-        [Header("Primitive Visual")]
-        [SerializeField] private Color[] _colors;
-        
+
+        [Header("Primitive Visual")] [SerializeField]
+        private Color[] _colors;
+
         private readonly List<Primitive> _primitives = new();
 
         private Rigidbody _currentPrimitiveRigidbody;
         private Rigidbody _lastSpawnedPrimitive;
         private float _currentHeight;
         private int _colorIndex;
+        private Color _currentColor;
 
-        
+
         private void Start() {
             _currentHeight = Height;
         }
@@ -50,14 +54,14 @@ namespace _Project.Scripts.Architecture
             var x = transform.position.x;
             var z = transform.position.z;
             var y = transform.position.y + _currentHeight;
-            
-            var newPrimitive = new Primitive(
-                new Vector3(x, y, z), 
-                !_lastSpawnedPrimitive ? new Vector3(Width, Height, Width) : _lastSpawnedPrimitive.transform.localScale,
-                _colors[_colorIndex++ % _colors.Length]
-                );
+            _currentColor = _colors[_colorIndex++ % _colors.Length];
 
-            _currentPrimitiveRigidbody = _primitiveSpawner?.SpawnPrimitive(newPrimitive);
+            var currentPrimitive = new Primitive(
+                new Vector3(x, y, z),
+                !_lastSpawnedPrimitive ? new Vector3(Width, Height, Width) : _lastSpawnedPrimitive.transform.localScale,
+                _currentColor);
+
+            _currentPrimitiveRigidbody = _primitiveSpawner?.SpawnPrimitive(currentPrimitive);
 
             _animator?.Animate(_currentPrimitiveRigidbody?.transform, _lastSpawnedPrimitive?.position ?? Vector3.zero);
             _animator?.UpdateDirection(Random.Range(_fromDirectionRadius, _toDirectionRadius));
@@ -73,12 +77,17 @@ namespace _Project.Scripts.Architecture
 
             var oldPrimitive = new Primitive(
                 _lastSpawnedPrimitive?.position ?? Vector3.zero,
-                _lastSpawnedPrimitive?.transform.localScale ?? new Vector3(Width, Height, Width)
+                _lastSpawnedPrimitive?.transform.localScale ?? new Vector3(Width, Height, Width),
+                Color.white
             );
 
-            var newPrimitive = new Primitive(_currentPrimitiveRigidbody.position, _currentPrimitiveRigidbody.transform.localScale);
 
-            if (!Intersects(oldPrimitive,newPrimitive)) {
+            var currentPrimitive = new Primitive(
+                _currentPrimitiveRigidbody.transform.position,
+                _currentPrimitiveRigidbody.transform.localScale,
+                _currentColor);
+            
+            if (!Intersects(oldPrimitive, currentPrimitive)) {
                 _currentPrimitiveRigidbody.useGravity = true;
                 _currentPrimitiveRigidbody.isKinematic = false;
                 _primitiveSpawner.ReturnToPoolWithDelay(_currentPrimitiveRigidbody, 0.5f);
@@ -87,9 +96,9 @@ namespace _Project.Scripts.Architecture
             }
 
             _primitiveSpawner?.ReturnToPoolWithDelay(_currentPrimitiveRigidbody, 0);
-            
+
             // Find overlap
-            var overlap = GetOverlap(oldPrimitive, newPrimitive);
+            var overlap = GetOverlap(oldPrimitive, currentPrimitive);
             if (overlap == null) {
                 return;
             }
@@ -98,7 +107,7 @@ namespace _Project.Scripts.Architecture
             _primitives.Add((Primitive)overlap);
 
             //Find falling parts
-            _fallingPartSpawner.SpawnFallingPart(newPrimitive, (Primitive)overlap, Height);
+            _fallingPartSpawner.SpawnFallingPart(currentPrimitive, (Primitive)overlap, Height);
             _lastSpawnedPrimitive = overlapPrimitive;
         }
 
@@ -120,12 +129,11 @@ namespace _Project.Scripts.Architecture
             var overlapPositionZ = (overlapMinZ + overlapMaxZ) / 2;
             var overlapPosition = new Vector3(overlapPositionX, currentPrimitive.Position.y, overlapPositionZ);
 
-            var overlap = new Primitive()
-            {
+            var overlap = new Primitive() {
                 Position = overlapPosition,
                 Scale = overlapScale,
                 Color = currentPrimitive.Color,
-                
+
                 MinX = overlapMinX,
                 MaxX = overlapMaxX,
                 MinZ = overlapMinZ,
@@ -135,7 +143,7 @@ namespace _Project.Scripts.Architecture
             return overlap;
         }
 
-        private bool  Intersects(in Primitive oldPrimitive,in Primitive currentPrimitive) {
+        private bool Intersects(in Primitive oldPrimitive, in Primitive currentPrimitive) {
             var xOverlap = oldPrimitive.MaxX > currentPrimitive.MinX && oldPrimitive.MinX < currentPrimitive.MaxX;
             var zOverlap = oldPrimitive.MaxZ > currentPrimitive.MinZ && oldPrimitive.MinZ < currentPrimitive.MaxZ;
             return xOverlap && zOverlap;
