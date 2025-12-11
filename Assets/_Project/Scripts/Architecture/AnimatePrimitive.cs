@@ -5,38 +5,50 @@ namespace _Project.Scripts.Architecture
 {
     public class AnimatePrimitive : MonoBehaviour
     {
+        [SerializeField] private float _distance;
         [SerializeField] private float _speed;
 
-        [Header("Points")] 
-        [SerializeField] private Transform _startPosition;
-        [SerializeField] private Transform _endPosition;
-
+        private float _direction;
         private bool _isAnimating;
         private Coroutine _coroutine;
 
-        public void Animate(Transform primitive)
-        {
+        public void Animate(Transform primitive, Vector3 center) {
             if (_isAnimating) return;
 
             _isAnimating = true;
-            _coroutine = StartCoroutine(AnimateCoroutine(primitive));
+            _coroutine = StartCoroutine(AnimateCoroutine(primitive, center));
         }
 
-        public void Stop()
-        {
+        public void Stop() {
             if (!_isAnimating) return;
             StopCoroutine(_coroutine);
             _isAnimating = false;
         }
 
-        private IEnumerator AnimateCoroutine(Transform primitive)
-        {
-            var startPosition = new Vector3(_startPosition.position.x, primitive.position.y, _startPosition.position.z);
-            var endPosition = new Vector3(_endPosition.position.x, primitive.position.y, _endPosition.position.z);
+        public void UpdateDirection(float newDirection) {
+            _direction = newDirection;
+        }
+
+        private IEnumerator AnimateCoroutine(Transform primitive, Vector3 center) {
+            var rad = _direction * Mathf.Deg2Rad;
+            var x = Mathf.Cos(rad) * _distance;
+            var z = Mathf.Sin(rad) * _distance;
+            var position = new Vector3(x, 0, z);
+
+            var startPosition = center - position;
+            var endPosition = center + position;
+
+            startPosition.y = primitive.position.y;
+            endPosition.y = primitive.position.y;
+
             float step = 0;
-            
-            while (true)
-            {
+
+            while (true) {
+                if (step >= 1) {
+                    step = 0;
+                    (startPosition, endPosition) = (endPosition, startPosition);
+                }
+
                 step += Time.deltaTime * _speed;
                 primitive.position = Vector3.Lerp(startPosition, endPosition, step);
                 yield return null;
