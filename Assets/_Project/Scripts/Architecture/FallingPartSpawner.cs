@@ -44,7 +44,7 @@ namespace _Project.Scripts.Architecture
         }
 
         private void TrySpawnPart(Vector3 scale, Vector3 position) {
-            var part = _primitiveSpawner.SpawnPrimitive(scale, position);
+            var part = _primitiveSpawner.SpawnPrimitive(scale, position, Color.white);
             part.useGravity = true;
             part.isKinematic = false;
 

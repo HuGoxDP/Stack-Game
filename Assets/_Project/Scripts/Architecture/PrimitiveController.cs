@@ -22,8 +22,8 @@ namespace _Project.Scripts.Architecture
         
         private readonly List<Primitive> _primitives = new();
 
-        private Rigidbody _newPrimitive;
-        private Rigidbody _oldPrimitive;
+        private Rigidbody _currentPrimitiveRigidbody;
+        private Rigidbody _lastSpawnedPrimitive;
         private float _currentHeight;
         private int _colorIndex;
 
@@ -51,38 +51,42 @@ namespace _Project.Scripts.Architecture
             var z = transform.position.z;
             var y = transform.position.y + _currentHeight;
             
-            _newPrimitive = _primitiveSpawner?.SpawnPrimitive(
-            !_oldPrimitive ? new Vector3(Width, Height, Width) : _oldPrimitive.transform.localScale,
-            new Vector3(x, y, z));
+            var newPrimitive = new Primitive(
+                new Vector3(x, y, z), 
+                !_lastSpawnedPrimitive ? new Vector3(Width, Height, Width) : _lastSpawnedPrimitive.transform.localScale,
+                _colors[_colorIndex++ % _colors.Length]
+                );
 
-            _animator?.Animate(_newPrimitive?.transform, _oldPrimitive?.position ?? Vector3.zero);
+            _currentPrimitiveRigidbody = _primitiveSpawner?.SpawnPrimitive(newPrimitive);
+
+            _animator?.Animate(_currentPrimitiveRigidbody?.transform, _lastSpawnedPrimitive?.position ?? Vector3.zero);
             _animator?.UpdateDirection(Random.Range(_fromDirectionRadius, _toDirectionRadius));
 
             _currentHeight += Height;
         }
 
         private void StopPrimitive() {
-            if (!_newPrimitive)
+            if (!_currentPrimitiveRigidbody)
                 return;
 
             _animator.Stop();
 
             var oldPrimitive = new Primitive(
-                _oldPrimitive?.position ?? Vector3.zero,
-                _oldPrimitive?.transform.localScale ?? new Vector3(Width, Height, Width)
+                _lastSpawnedPrimitive?.position ?? Vector3.zero,
+                _lastSpawnedPrimitive?.transform.localScale ?? new Vector3(Width, Height, Width)
             );
 
-            var newPrimitive = new Primitive(_newPrimitive.position, _newPrimitive.transform.localScale);
+            var newPrimitive = new Primitive(_currentPrimitiveRigidbody.position, _currentPrimitiveRigidbody.transform.localScale);
 
             if (!Intersects(oldPrimitive,newPrimitive)) {
-                _newPrimitive.useGravity = true;
-                _newPrimitive.isKinematic = false;
-                _primitiveSpawner.ReturnToPoolWithDelay(_newPrimitive, 0.5f);
-                _newPrimitive = null;
+                _currentPrimitiveRigidbody.useGravity = true;
+                _currentPrimitiveRigidbody.isKinematic = false;
+                _primitiveSpawner.ReturnToPoolWithDelay(_currentPrimitiveRigidbody, 0.5f);
+                _currentPrimitiveRigidbody = null;
                 return;
             }
 
-            _primitiveSpawner?.ReturnToPoolWithDelay(_newPrimitive, 0);
+            _primitiveSpawner?.ReturnToPoolWithDelay(_currentPrimitiveRigidbody, 0);
             
             // Find overlap
             var overlap = GetOverlap(oldPrimitive, newPrimitive);
@@ -95,32 +99,33 @@ namespace _Project.Scripts.Architecture
 
             //Find falling parts
             _fallingPartSpawner.SpawnFallingPart(newPrimitive, (Primitive)overlap, Height);
-            _oldPrimitive = overlapPrimitive;
+            _lastSpawnedPrimitive = overlapPrimitive;
         }
 
-        private Primitive? GetOverlap(Primitive oldPrimitive, Primitive newPrimitive) {
-            if (!Intersects(oldPrimitive, newPrimitive)) {
+        private Primitive? GetOverlap(in Primitive oldPrimitive, in Primitive currentPrimitive) {
+            if (!Intersects(oldPrimitive, currentPrimitive)) {
                 return null;
             }
 
-            var overlapMinX = Mathf.Max(oldPrimitive.MinX, newPrimitive.MinX);
-            var overlapMaxX = Mathf.Min(oldPrimitive.MaxX, newPrimitive.MaxX);
-            var overlapMinZ = Mathf.Max(oldPrimitive.MinZ, newPrimitive.MinZ);
-            var overlapMaxZ = Mathf.Min(oldPrimitive.MaxZ, newPrimitive.MaxZ);
+            var overlapMinX = Mathf.Max(oldPrimitive.MinX, currentPrimitive.MinX);
+            var overlapMaxX = Mathf.Min(oldPrimitive.MaxX, currentPrimitive.MaxX);
+            var overlapMinZ = Mathf.Max(oldPrimitive.MinZ, currentPrimitive.MinZ);
+            var overlapMaxZ = Mathf.Min(oldPrimitive.MaxZ, currentPrimitive.MaxZ);
 
             var overlapSizeX = overlapMaxX - overlapMinX;
             var overlapSizeZ = overlapMaxZ - overlapMinZ;
-            var overlapScale = new Vector3(overlapSizeX, newPrimitive.Scale.y, overlapSizeZ);
+            var overlapScale = new Vector3(overlapSizeX, currentPrimitive.Scale.y, overlapSizeZ);
 
             var overlapPositionX = (overlapMinX + overlapMaxX) / 2;
             var overlapPositionZ = (overlapMinZ + overlapMaxZ) / 2;
-            var overlapPosition = new Vector3(overlapPositionX, newPrimitive.Position.y, overlapPositionZ);
+            var overlapPosition = new Vector3(overlapPositionX, currentPrimitive.Position.y, overlapPositionZ);
 
             var overlap = new Primitive()
             {
                 Position = overlapPosition,
                 Scale = overlapScale,
-
+                Color = currentPrimitive.Color,
+                
                 MinX = overlapMinX,
                 MaxX = overlapMaxX,
                 MinZ = overlapMinZ,
@@ -130,9 +135,9 @@ namespace _Project.Scripts.Architecture
             return overlap;
         }
 
-        private bool  Intersects(Primitive oldPrimitive, Primitive newPrimitive) {
-            var xOverlap = oldPrimitive.MaxX > newPrimitive.MinX && oldPrimitive.MinX < newPrimitive.MaxX;
-            var zOverlap = oldPrimitive.MaxZ > newPrimitive.MinZ && oldPrimitive.MinZ < newPrimitive.MaxZ;
+        private bool  Intersects(in Primitive oldPrimitive,in Primitive currentPrimitive) {
+            var xOverlap = oldPrimitive.MaxX > currentPrimitive.MinX && oldPrimitive.MinX < currentPrimitive.MaxX;
+            var zOverlap = oldPrimitive.MaxZ > currentPrimitive.MinZ && oldPrimitive.MinZ < currentPrimitive.MaxZ;
             return xOverlap && zOverlap;
         }
     }

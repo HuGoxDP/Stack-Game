@@ -61,14 +61,16 @@ namespace _Project.Scripts.Architecture
         }
 
         public Rigidbody SpawnPrimitive(Primitive primitive) {
-            return SpawnPrimitive(primitive.Scale, primitive.Position);
+            return SpawnPrimitive(primitive.Scale, primitive.Position, primitive.Color);
         }
 
-        public Rigidbody SpawnPrimitive(Vector3 scale, Vector3 position) {
+        public Rigidbody SpawnPrimitive(Vector3 scale, Vector3 position, Color color) {
             var rb = _pool.Get();
             rb.transform.rotation = Quaternion.identity;
             rb.transform.localScale = scale;
             rb.transform.position = position;
+            if(rb.TryGetComponent<MeshRenderer>(out var renderer)){
+                renderer.material.color = color;}
             return rb;
         }
     }
