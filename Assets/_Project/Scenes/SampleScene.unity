@@ -1213,7 +1213,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3af04b76098e4a0a9e1d144b8e5a435b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _primitiveSpawner: {fileID: 0}
+  _primitiveSpawner: {fileID: 1119205063}
   _destroyDelay: 0.5
 --- !u!114 &1119205063
 MonoBehaviour:
