@@ -11,18 +11,15 @@ namespace _Project.Scripts.Architecture
         [SerializeField] private CameraMover _cameraMover;
         
         [Header("Primitive Size")]
-        [field: SerializeField]
-        public float Width { get; private set; }
-
+        [field: SerializeField] public float Width { get; private set; }
         [field: SerializeField] public float Height { get; private set; }
 
-        [Header("Animation Settings")] [SerializeField]
-        private float _fromDirectionRadius;
+        [Header("Animation Settings")]
+        [SerializeField] private float _minDirectionAngle;
+        [SerializeField] private float _maxDirectionAngle = 90f;
 
-        [SerializeField] private float _toDirectionRadius = 90f;
-
-        [Header("Primitive Visual")] [SerializeField]
-        private Color[] _colors;
+        [Header("Primitive Visual")] 
+        [SerializeField] private Color[] _colors;
 
         private readonly List<Primitive> _primitives = new();
 
@@ -57,15 +54,26 @@ namespace _Project.Scripts.Architecture
             var y = transform.position.y + _currentHeight;
             _currentColor = _colors[_colorIndex++ % _colors.Length];
 
-            var currentPrimitive = new Primitive(
-                new Vector3(x, y, z),
-                !_lastSpawnedPrimitive ? new Vector3(Width, Height, Width) : _lastSpawnedPrimitive.transform.localScale,
-                _currentColor);
+            Primitive currentPrimitive;
+            
+            if (_lastSpawnedPrimitive) {
+                currentPrimitive = new Primitive(
+                    new Vector3(x, y, z),
+                    _lastSpawnedPrimitive.transform.localScale,
+                    _currentColor);
+            }
+            else {
+                currentPrimitive = new Primitive(
+                    new Vector3(x, y, z),
+                    new Vector3(Width, Height, Width),
+                    _currentColor);
+            }
+            
 
             _currentPrimitiveRigidbody = _primitiveSpawner?.SpawnPrimitive(currentPrimitive);
 
             _animator?.Animate(_currentPrimitiveRigidbody?.transform, _lastSpawnedPrimitive?.position ?? Vector3.zero);
-            _animator?.UpdateDirection(Random.Range(_fromDirectionRadius, _toDirectionRadius));
+            _animator?.UpdateDirection(Random.Range(_minDirectionAngle, _maxDirectionAngle));
 
             _currentHeight += Height;
         }
@@ -128,16 +136,7 @@ namespace _Project.Scripts.Architecture
             var overlapPositionZ = (overlapMinZ + overlapMaxZ) / 2;
             var overlapPosition = new Vector3(overlapPositionX, currentPrimitive.Position.y, overlapPositionZ);
 
-            var overlap = new Primitive() {
-                Position = overlapPosition,
-                Scale = overlapScale,
-                Color = currentPrimitive.Color,
-
-                MinX = overlapMinX,
-                MaxX = overlapMaxX,
-                MinZ = overlapMinZ,
-                MaxZ = overlapMaxZ
-            };
+            var overlap = new Primitive(overlapPosition, overlapScale, currentPrimitive.Color);
 
             return overlap;
         }
