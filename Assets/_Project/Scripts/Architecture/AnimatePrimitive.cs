@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using UnityEngine;
 
-namespace _Project.Scripts.Architecture
+namespace Architecture
 {
     public class AnimatePrimitive : MonoBehaviour
     {

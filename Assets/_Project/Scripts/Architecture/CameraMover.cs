@@ -1,7 +1,6 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace _Project.Scripts.Architecture
+namespace Architecture
 {
     public class CameraMover : MonoBehaviour
     {

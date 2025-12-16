@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace _Project.Scripts.Architecture
+namespace Architecture
 {
     public struct Primitive
     {

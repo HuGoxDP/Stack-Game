@@ -1,13 +1,13 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace _Project.Scripts.Architecture
+namespace Architecture
 {
     public class PrimitiveController : MonoBehaviour
     {
         [SerializeField] private AnimatePrimitive _animator;
         [SerializeField] private PrimitiveSpawner _primitiveSpawner;
-        [SerializeField] private FallingPartSpawner _fallingPartSpawner;
+        [SerializeField] private FallingPartFactory _fallingPartFactory;
         [SerializeField] private CameraMover _cameraMover;
         
         [Header("Primitive Size")]
@@ -23,14 +23,17 @@ namespace _Project.Scripts.Architecture
 
         private readonly List<Primitive> _primitives = new();
 
+        private IGameManager _gameManager;
         private Rigidbody _currentPrimitiveRigidbody;
         private Rigidbody _lastSpawnedPrimitive;
         private float _currentHeight;
         private int _colorIndex;
         private Color _currentColor;
+        
 
 
         private void Start() {
+            _gameManager = GameManager.Instance;
             _currentHeight = Height;
         }
 
@@ -102,19 +105,23 @@ namespace _Project.Scripts.Architecture
             if (overlap == null) {
                 _currentPrimitiveRigidbody.useGravity = true;
                 _currentPrimitiveRigidbody.isKinematic = false;
-                _primitiveSpawner.ReturnToPoolWithDelay(_currentPrimitiveRigidbody, 0.5f);
+                _primitiveSpawner.ReturnPrimitiveToPool(_currentPrimitiveRigidbody, 0.5f);
                 _currentPrimitiveRigidbody = null;
+                _gameManager.TriggerGameOver();
                 return;
             }
-            _primitiveSpawner?.ReturnToPoolWithDelay(_currentPrimitiveRigidbody, 0);
-
+            _primitiveSpawner?.ReturnPrimitiveToPool(_currentPrimitiveRigidbody);
+            
+            //Spawn overlap primitive
             var overlapPrimitive = _primitiveSpawner?.SpawnPrimitive((Primitive)overlap);
             _primitives.Add((Primitive)overlap);
-
+            _gameManager.AddScore();
+            
             //Find falling parts
-            _fallingPartSpawner.SpawnFallingPart(currentPrimitive, (Primitive)overlap, Height);
+            _fallingPartFactory.SpawnFallingPart(currentPrimitive, (Primitive)overlap, Height);
             _lastSpawnedPrimitive = overlapPrimitive;
             
+            //Move camera up
             _cameraMover?.MoveUp(Height);
         }
 

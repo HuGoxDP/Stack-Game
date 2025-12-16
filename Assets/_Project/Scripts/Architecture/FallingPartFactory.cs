@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 
-namespace _Project.Scripts.Architecture
+namespace Architecture
 {
-    public class FallingPartSpawner : MonoBehaviour
+    public class FallingPartFactory : MonoBehaviour
     {
         [SerializeField] private PrimitiveSpawner _primitiveSpawner;
         [SerializeField] private float _destroyDelay = 0.5f;
@@ -52,7 +52,7 @@ namespace _Project.Scripts.Architecture
             part.useGravity = true;
             part.isKinematic = false;
 
-            _primitiveSpawner.ReturnToPoolWithDelay(part, _destroyDelay);
+            _primitiveSpawner.ReturnPrimitiveToPool(part, _destroyDelay);
         }
     }
 }

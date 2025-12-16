@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 
-namespace _Project.Scripts.Architecture
+namespace Architecture
 {
     public class PrimitiveSpawner : MonoBehaviour
     {
@@ -48,7 +48,7 @@ namespace _Project.Scripts.Architecture
             return rb;
         }
 
-        public void ReturnToPoolWithDelay(Rigidbody primitive, float delay) {
+        public void ReturnPrimitiveToPool(Rigidbody primitive, float delay = 0f) {
             var id = primitive.GetInstanceID();
             _coroutines.Add(id, ReturnToPool(primitive, delay, id));
             StartCoroutine(ReturnToPool(primitive, delay, id));
